@@ -10,7 +10,9 @@ from config import ADMINS, OWNER_ID, FORCE_MSG, START_MSG, CUSTOM_CAPTION, DISAB
 from helper_func import subscribed, encode, decode, get_messages
 from database.database import add_user, del_user, full_userbase, present_user
 
-
+"""add time im seconds for waitingwaiting before delete 
+1min=60, 2min=60×2=120, 5min=60×5=300"""
+SECONDS = int(os.getenv("SECONDS", "60"))
 
 
 @Bot.on_message(filters.command('start') & filters.private & subscribed)
@@ -57,7 +59,8 @@ async def start_command(client: Client, message: Message):
             await message.reply_text("Something went wrong..!")
             return
         await temp_msg.delete()
-
+        
+        Codeflix = []
         for msg in messages:
 
             if bool(CUSTOM_CAPTION) & bool(msg.document):
@@ -71,13 +74,25 @@ async def start_command(client: Client, message: Message):
                 reply_markup = None
 
             try:
-                await msg.copy(chat_id=message.from_user.id, caption = caption, parse_mode = ParseMode.HTML, reply_markup = reply_markup, protect_content=PROTECT_CONTENT)
-                await asyncio.sleep(0.5)
+                snt_msg = await msg.copy(chat_id=message.from_user.id, caption = caption, parse_mode = ParseMode.HTML, reply_markup = reply_markup, protect_content=PROTECT_CONTENT)
+                await asyncio.sleep(1)
+                Codeflix.append(snt_msg)
             except FloodWait as e:
                 await asyncio.sleep(e.x)
-                await msg.copy(chat_id=message.from_user.id, caption = caption, parse_mode = ParseMode.HTML, reply_markup = reply_markup, protect_content=PROTECT_CONTENT)
+                snt_msg = await msg.copy(chat_id=message.from_user.id, caption = caption, parse_mode = ParseMode.HTML, reply_markup = reply_markup, protect_content=PROTECT_CONTENT)
+                Codeflix.append(snt_msg)
             except:
                 pass
+        k = await message.reply_text("<b>❗️ <u>baka!</u> ❗️</b>\n\n<b>This video / file will be deleted in 10 minutes (Due to copyright issues).\n\n📌 Please forward this video / file to somewhere else and start downloading there.</b>")
+        await asyncio.sleep(SECONDS)
+
+        for data in Codeflix:
+            try:
+                await data.delete()
+                await k.edit_text("<b>Your video / file is successfully deleted !</b>")
+            except:
+                pass
+                
         return
     else:
         reply_markup = InlineKeyboardMarkup(
@@ -87,7 +102,7 @@ async def start_command(client: Client, message: Message):
                     InlineKeyboardButton('🍁 ᴘʀᴇᴍɪᴜᴍ', url='https://t.me/OtakuFlix_Network/4639')
                 ]
             ]
-                )
+        )
         await message.reply_text(
             text = START_MSG.format(
                 first = message.from_user.first_name,
